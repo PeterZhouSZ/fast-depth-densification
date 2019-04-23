@@ -5,6 +5,76 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb/stb_image.h"
 
+template <typename T>
+class image_buffer
+{
+    uint2 dims{ 0, 0 };
+    T * alias;
+    struct delete_array { void operator()(T * p) { delete[] p; } };
+    std::unique_ptr<T, decltype(image_buffer::delete_array())> buffer;
+    uint32_t C{ 0 };
+
+public:
+
+    image_buffer() = default;
+
+    image_buffer(const uint2 size, const uint32_t channels) :
+        dims(size), C(channels), buffer(new T[size.x * size.y * channels], delete_array())
+    {
+        alias = buffer.get();
+    }
+
+    image_buffer(const image_buffer<T> & r) :
+        dims(r.dims), buffer(new T[dims.x * dims.y * C], delete_array())
+    {
+        alias = buffer.get();
+        if (r.alias) std::memcpy(alias, r.alias, dims.x * dims.y * C * sizeof(T));
+    }
+
+    image_buffer & operator=(const image_buffer<T> & r)
+    {
+        buffer = { new T[dims.x * dims.y * C], delete_array() };
+        alias = buffer.get();
+        dims = r.dims;
+        C = r.C;
+        if (r.alias) std::memcpy(alias, r.alias, dims.x * dims.y * C * sizeof(T));
+        return *this;
+    }
+
+    void flip_y_inplace()
+    {
+        const size_t bytes_per_pixel = sizeof(float) * C;
+        const size_t row_stride_bytes = dims.x * bytes_per_pixel;
+        std::vector<uint8_t> row(row_stride_bytes);
+        uint8_t * low = reinterpret_cast<uint8_t *>(alias);
+        uint8_t * high = &reinterpret_cast<uint8_t *>(alias)[(dims.y - 1) * row_stride_bytes];
+
+        for (; low < high; low += row_stride_bytes, high -= row_stride_bytes)
+        {
+            std::memcpy(row.data(), low, row_stride_bytes);
+            std::memcpy(low, high, row_stride_bytes);
+            std::memcpy(high, row.data(), row_stride_bytes);
+        }
+    }
+
+    uint2 size() const { return dims; }
+    uint32_t num_bytes() const { return C * dims.x * dims.y * sizeof(T); }
+    uint32_t num_pixels() const { return dims.x * dims.y; }
+    uint32_t num_channels() const { return C; }
+
+    T * data() { return alias; }
+    const T * data() const { return alias; }
+
+    T & operator()(int y, int x) { return alias[y * dims.x + x]; }
+    T & operator()(int y, int x, int channel) { return alias[C * (y * dims.x + x) + channel]; }
+
+    const T operator()(int y, int x) const { return alias[y * dims.x + x]; }
+    const T operator()(int y, int x, int channel) const { return alias[C * (y * dims.x + x) + channel]; }
+};
+
+typedef image_buffer<float> image_f;
+typedef image_buffer<uint8_t> image_byte;
+
 std::unique_ptr<window> win;
 std::unique_ptr<gui::imgui_manager> imgui;
 
