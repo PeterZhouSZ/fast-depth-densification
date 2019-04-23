@@ -5,6 +5,31 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb/stb_image.h"
 
+// https://colmap.github.io/format.html
+namespace colmap
+{
+    struct point_3d
+    {
+        uint32_t id{ -1 };
+        float3 data;
+    };
+
+    struct pinhole_camera
+    {
+
+    };
+
+    struct camera_view
+    {
+
+    };
+
+    struct reconstruction
+    {
+
+    };
+};
+
 template <typename T>
 class image_buffer
 {
