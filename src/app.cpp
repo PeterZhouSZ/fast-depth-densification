@@ -5,23 +5,41 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb/stb_image.h"
 
+// https://blog.molecular-matters.com/2013/05/24/a-faster-quaternion-vector-multiplication/
 // https://colmap.github.io/format.html
+// https://github.com/colmap/colmap/issues/434
+
 namespace colmap
 {
+    struct intrinsics
+    {
+        uint2 sensor_dimensions;
+        float2 focal_length;
+        float3 principal_point;
+    };
+
     struct point_3d
     {
         uint32_t id{ -1 };
         float3 data;
     };
 
+    // https://colmap.github.io/format.html#cameras-txt
     struct pinhole_camera
     {
-
+        uint32_t id{ -1 };
+        intrinsics intrin;
+        std::string model;
     };
 
     struct camera_view
     {
-
+        uint32_t id{ -1 };
+        std::string name;
+        uint32_t camera_id{ -1 };
+        float4 orientation;
+        float3 translation;
+        std::unordered_map<uint32_t, float2> sparse_points;
     };
 
     struct reconstruction
