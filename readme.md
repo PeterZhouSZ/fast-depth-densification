@@ -1,4 +1,4 @@
-# fast-depth-densification
+# fast-depth-densification - work in progress
 
 An implementation of [Fast Depth Densification for Occlusion-Aware Augmented Reality](https://homes.cs.washington.edu/~holynski/publications/occlusion/index.html) in C++ with minimal dependencies.
 
